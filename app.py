@@ -173,8 +173,23 @@ def extract_audio_from_url(video_url):
         
         temp_dir = tempfile.mkdtemp()
         output_path = os.path.join(temp_dir, 'audio.mp3')
-        
+
         ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": output_template,
+            "quiet": True,
+            "no_warnings": True,
+            "socket_timeout": socket_timeout,
+            "retries": retries,
+            # Add these three:
+            "extractor_retries": 5,
+            "fragment_retries": 5,
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            },
+        }
+        
+        """ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -184,7 +199,7 @@ def extract_audio_from_url(video_url):
             'outtmpl': output_path.replace('.mp3', ''),
             'quiet': True,
             'no_warnings': True,
-        }
+        }""""
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
