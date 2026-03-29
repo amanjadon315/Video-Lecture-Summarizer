@@ -1,0 +1,4 @@
+bart_lecture_model/
+__pycache__/
+*.pyc
+.env
