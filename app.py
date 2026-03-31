@@ -250,7 +250,7 @@ def load_tfidf_model(model_path='tfidf_lecture_model.pkl'):
         return None, None
 
 @st.cache_resource
-def load_bart_model(model_name='./bart_lecture_model'):
+def load_bart_model(model_name='https://huggingface.co/jadon14/Bart-Model'):
     """Load BART model from local folder"""
     try:
         from transformers import BartForConditionalGeneration, BartTokenizer
