@@ -167,38 +167,54 @@ st.markdown("""
 
 @st.cache_data(show_spinner=False)
 def extract_audio_from_url(video_url):
-    """Extract audio from video URL"""
+    """Extract audio from video URL - Streamlit Cloud compatible"""
     try:
         import yt_dlp
+        import glob
         
         temp_dir = tempfile.mkdtemp()
-        output_path = os.path.join(temp_dir, 'audio.mp3')
-
+        output_template = os.path.join(temp_dir, 'audio')
+        
         ydl_opts = {
-            "format": "bestaudio/best",
-            "outtmpl": output_template,
-            "quiet": True,
-            "no_warnings": True,
-            "socket_timeout": socket_timeout,
-            "retries": retries,
-            # Add these three:
-            "extractor_retries": 5,
-            "fragment_retries": 5,
-            "http_headers": {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            'format': 'bestaudio/best',
+            'outtmpl': output_template,
+            'quiet': False,  # Show errors
+            'no_warnings': False,
+            'extract_audio': True,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '128',
+            }],
+            # Streamlit Cloud compatibility
+            'socket_timeout': 30,
+            'retries': 3,
+            # Bypass YouTube bot detection
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+                'Sec-Fetch-Mode': 'navigate',
             },
         }
-        
-        
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
             title = info.get('title', 'Unknown')
             duration = info.get('duration', 0)
         
-        return output_path, title, duration
+        # Find the downloaded file
+        audio_files = glob.glob(os.path.join(temp_dir, 'audio*'))
+        if not audio_files:
+            st.error("Audio file not created after download")
+            return None, None, None
+        
+        return audio_files[0], title, duration
     
     except Exception as e:
+        st.error(f"Audio extraction error: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
         return None, None, None
 
 # ==============================================================================
@@ -582,12 +598,26 @@ def main():
     
     with st.sidebar.expander("🎯 Supported Platforms"):
         st.markdown("""
-        ✅ YouTube  
+        **Best for Cloud Deployment:**
+        ✅ Archive.org (Recommended)
         ✅ Vimeo  
         ✅ Dailymotion  
-        ✅ Facebook  
-        ✅ Twitter  
-        ✅ And 1000+ more sites!
+        
+        **May have restrictions:**
+        ⚠️ YouTube (may be blocked on cloud)
+        
+        **Tip:** Use Manual Transcript for guaranteed results!
+        """)
+    
+    with st.sidebar.expander("💡 Sample Videos"):
+        st.markdown("""
+        **Try these (Archive.org):**
+        
+        MIT Lecture:
+        `https://archive.org/details/mit-6.034-fall-2010-lecture-01`
+        
+        Stanford ML:
+        `https://archive.org/details/stanford-machine-learning-cs229`
         """)
     
     # Main content
